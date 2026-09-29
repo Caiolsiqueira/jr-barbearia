@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#191d0e">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="J&R Barbearia">
+  <meta name="apple-mobile-web-app-title" content="J&R Barbearia">
+  <meta name="description" content="Agendamento online e gestão para a Barbearia J&R (Juliano e Robert). Atendimento de Terça a Sábado das 09h às 17h30.">
+
+  <title>J&R Barbearia - Juliano & Robert</title>
+
+  <!-- PWA Manifest & Ícones -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
+  <link rel="apple-touch-icon" href="./assets/icon.svg">
+
+  <!-- Estilos Globais -->
+  <link rel="stylesheet" href="./css/styles.css">
+
+  <!-- Chart.js CDN (opcional para gráficos ultra responsivos, com fallback nativo integrado) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+
+  <!-- ==============================================================================
+       HEADER GLOBAL
+       ============================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrap" onclick="window.JR_APP.switchView('booking')">
+        <img src="./assets/logo.svg" alt="J&R Barbearia" class="brand-logo-img">
+      </div>
+
+      <div class="header-actions">
+        <!-- Alternador entre Área do Cliente e Painel do Barbeiro -->
+        <button type="button" class="nav-toggle-btn" id="viewToggleBtn" onclick="window.JR_APP.toggleView()">
+          <span id="navToggleIcon">💈</span>
+          <span id="navToggleLabel">Área do Barbeiro</span>
+        </button>
+
+        <!-- Botão de Configuração de Banco (Supabase) -->
+        <button type="button" class="btn-settings-icon" title="Configurar Supabase" onclick="window.JR_APP.openSettingsModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==============================================================================
+       CONTEÚDO PRINCIPAL
+       ============================================================================== -->
+  <main class="main-wrapper">
+
+    <!-- ==========================================================================
+         VISÃO DO CLIENTE: FLUXO DE AGENDAMENTO
+         ========================================================================== -->
+    <section id="clientBookingView" class="view-section">
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-content">
+          <div class="hero-pill">
+            <span>✂️ Agendamento Online</span>
+          </div>
+          <h1 class="hero-title">Estilo Impecável com <span>Juliano &amp; Robert</span></h1>
+          <p class="hero-desc">
+            Escolha seu barbeiro favorito, o serviço desejado e garanta seu horário em segundos.
+            Atendimento pontual de <strong>Terça a Sábado das 09:00 às 17:30</strong>.
+          </p>
+        </div>
+      </div>
+
+      <form id="publicBookingForm">
+        <!-- ETAPA 1: SEUS DADOS -->
+        <div class="booking-section-card">
+          <div class="section-head">
+            <span class="step-number">1</span>
+            <h2 class="section-title">Seus Dados de Contato</h2>
+          </div>
+          <div class="input-row">
+            <div class="form-group">
+              <label for="clienteNome" class="form-label">Nome Completo <span class="required">*</span></label>
+              <input type="text" id="clienteNome" class="form-input" placeholder="Ex: Lucas Gabriel Oliveira" required autocomplete="name">
+            </div>
+            <div class="form-group">
+              <label for="clienteTelefone" class="form-label">WhatsApp / Telefone <span class="required">*</span></label>
+              <input type="tel" id="clienteTelefone" class="form-input" placeholder="(11) 98765-4321" required autocomplete="tel" maxlength="15">
+            </div>
+          </div>
+        </div>
+
+        <!-- ETAPA 2: ESCOLHA DO BARBEIRO -->
+        <div class="booking-section-card">
+          <div class="section-head">
+            <span class="step-number">2</span>
+            <h2 class="section-title">Escolha seu Barbeiro</h2>
+          </div>
+          <div class="barber-grid" id="barberSelectionContainer">
+            <!-- Cards de Juliano e Robert inseridos dinamicamente -->
+          </div>
+        </div>
+
+        <!-- ETAPA 3: ESCOLHA DO SERVIÇO -->
+        <div class="booking-section-card">
+          <div class="section-head">
+            <span class="step-number">3</span>
+            <h2 class="section-title">Selecione o Serviço</h2>
+          </div>
+          <div class="services-grid" id="serviceSelectionContainer">
+            <!-- Serviços inseridos dinamicamente -->
+          </div>
+        </div>
+
+        <!-- ETAPA 4: ESCOLHA DA DATA -->
+        <div class="booking-section-card">
+          <div class="section-head">
+            <span class="step-number">4</span>
+            <h2 class="section-title">Selecione a Data</h2>
+          </div>
+
+          <div class="date-selector-wrap">
+            <div class="quick-dates-scroll" id="quickDatesContainer">
+              <!-- Botões rápidos de dias úteis -->
+            </div>
+
+            <div class="custom-date-row">
+              <label for="appointmentDate">Ou selecione no calendário:</label>
+              <input type="date" id="appointmentDate">
+            </div>
+          </div>
+
+          <!-- Alerta de Barbearia Fechada (Domingo e Segunda) -->
+          <div id="dateClosedWarning" class="closed-alert hidden"></div>
+        </div>
+
+        <!-- ETAPA 5: SELEÇÃO DINÂMICA DE HORÁRIOS -->
+        <div class="booking-section-card">
+          <div class="section-head">
+            <span class="step-number">5</span>
+            <h2 class="section-title">Horários Disponíveis (30 em 30 min)</h2>
+          </div>
+          <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 12px;">
+            A agenda é 100% individual por profissional. Os horários abaixo refletem a disponibilidade exata do barbeiro selecionado.
+          </p>
+
+          <div class="slots-grid" id="timeSlotsGrid">
+            <!-- Slots de 09:00 às 17:30 -->
+          </div>
+        </div>
+
+        <!-- BARRA FIXA MOBILE INFERIOR / CTA -->
+        <div class="booking-footer-bar">
+          <div class="footer-content">
+            <div class="footer-summary">
+              <span class="summary-label">Resumo do Serviço</span>
+              <div class="summary-value-wrap">
+                <span class="summary-price" id="summaryPriceDisplay">R$ 35,00</span>
+                <span class="summary-barber">• <span id="summaryBarberDisplay">Juliano</span></span>
+              </div>
+            </div>
+            <button type="submit" class="btn-cta-main" id="openConfirmationModalBtn">
+              <span>Avançar para Agendar</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ==========================================================================
+         VISÃO ADMINISTRATIVA: PAINEL DO BARBEIRO (/admin)
+         ========================================================================== -->
+    <section id="adminView" class="view-section hidden">
+      <!-- TELA DE LOGIN DO BARBEIRO -->
+      <div id="adminLoginSection" class="admin-card-container login-box">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="./assets/icon.svg" alt="J&R Barbearia" style="width: 64px; height: 64px; margin-bottom: 10px;">
+          <h2 class="modal-title">Área do Barbeiro</h2>
+          <p class="modal-subtitle">Acesso individual para Juliano e Robert</p>
+        </div>
+
+        <form id="adminLoginForm">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="adminUsername" class="form-label">Usuário</label>
+            <input type="text" id="adminUsername" class="form-input" placeholder="juliano ou robert" required autocomplete="username">
+          </div>
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="adminPassword" class="form-label">Senha</label>
+            <input type="password" id="adminPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn-cta-main" style="width: 100%;">Entrar no Painel</button>
+        </form>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-subtle); text-align: center;">
+          <p class="text-muted" style="font-size: 0.78rem; margin-bottom: 8px;">Acesso Rápido para Testes:</p>
+          <div style="display: flex; gap: 8px; justify-content: center;">
+            <button type="button" class="quick-login-btn btn-secondary" data-user="juliano" data-pass="juliano123" style="font-size: 0.78rem; padding: 6px 12px;">
+              Juliano (juliano123)
+            </button>
+            <button type="button" class="quick-login-btn btn-secondary" data-user="robert" data-pass="robert123" style="font-size: 0.78rem; padding: 6px 12px;">
+              Robert (robert123)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL PRINCIPAL (APÓS LOGIN) -->
+      <div id="adminDashboardSection" class="hidden">
+        <!-- Header do Barbeiro Logado -->
+        <div class="admin-header-bar">
+          <div class="barber-profile-pill">
+            <img src="./assets/icon.svg" id="adminBarberAvatar" alt="Barbeiro" class="barber-avatar-sm">
+            <div>
+              <h3 id="adminCurrentBarberName">Barbeiro</h3>
+              <span class="barber-badge-role">Profissional Independente J&amp;R</span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button type="button" class="btn-primary" id="openManualAppointmentBtn" style="font-size: 0.85rem; padding: 8px 14px;">
+              + Novo Agendamento
+            </button>
+            <button type="button" class="btn-secondary" id="adminLogoutBtn" style="font-size: 0.85rem; padding: 8px 14px;">
+              Sair
+            </button>
+          </div>
+        </div>
+
+        <!-- Abas do Painel -->
+        <nav class="admin-nav-tabs">
+          <button type="button" class="admin-nav-item active" data-tab="dashboard">📊 Dashboard &amp; Métricas</button>
+          <button type="button" class="admin-nav-item" data-tab="agenda">📅 Agenda Diária</button>
+          <button type="button" class="admin-nav-item" data-tab="precos">💰 Gestão de Preços &amp; Simulador</button>
+          <button type="button" class="admin-nav-item" data-tab="clientes">🏆 Top 10 Clientes</button>
+        </nav>
+
+        <!-- ABA 1: DASHBOARD & RELATÓRIOS -->
+        <div id="tabPane_dashboard" class="admin-tab-pane">
+          <!-- Filtro de Período -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="font-size: 1.1rem; font-weight: 700;">Visão Geral do Faturamento</h3>
+            <div class="chart-filters-wrap">
+              <button type="button" class="btn-filter-tag period-filter-btn" data-period="hoje">Hoje</button>
+              <button type="button" class="btn-filter-tag period-filter-btn" data-period="semana">Esta Semana</button>
+              <button type="button" class="btn-filter-tag period-filter-btn active" data-period="mes">Este Mês</button>
+              <button type="button" class="btn-filter-tag period-filter-btn" data-period="ano">Este Ano</button>
+              <button type="button" class="btn-filter-tag period-filter-btn" data-period="todos">Todos</button>
+            </div>
+          </div>
+
+          <!-- Cards de KPIs -->
+          <div class="kpi-grid">
+            <div class="kpi-card highlight">
+              <span class="kpi-title">Faturamento Realizado</span>
+              <span class="kpi-value" id="metricFaturamentoRealizado">R$ 0,00</span>
+              <span class="kpi-hint">Serviços concluídos no período</span>
+            </div>
+
+            <div class="kpi-card">
+              <span class="kpi-title">Faturamento Previsto</span>
+              <span class="kpi-value" id="metricFaturamentoPrevisto">R$ 0,00</span>
+              <span class="kpi-hint">Concluídos + Agendados futuros</span>
+            </div>
+
+            <div class="kpi-card">
+              <span class="kpi-title">Total de Atendimentos</span>
+              <span class="kpi-value" id="metricTotalCortes">0</span>
+              <span class="kpi-hint">Cortes e barbas atendidos</span>
+            </div>
+
+            <div class="kpi-card">
+              <span class="kpi-title">Ticket Médio</span>
+              <span class="kpi-value" id="metricTicketMedio">R$ 0,00</span>
+              <span class="kpi-hint">Taxa de Conclusão: <strong id="metricTaxaConclusao">100%</strong></span>
+            </div>
+          </div>
+
+          <!-- Gráfico Interativo -->
+          <div class="chart-box">
+            <div class="chart-header">
+              <div>
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Volume &amp; Evolução Temporal</h4>
+                <p class="text-muted" style="font-size: 0.78rem;">Agrupamento dinâmico para acompanhamento de demanda</p>
+              </div>
+
+              <!-- Filtros de Agrupamento: Dia, Semana, Mês, Ano -->
+              <div class="chart-filters-wrap">
+                <span class="text-muted" style="font-size: 0.75rem; align-self: center; margin-right: 4px;">Agrupar:</span>
+                <button type="button" class="btn-filter-tag chart-group-btn active" data-group="dia">Dia</button>
+                <button type="button" class="btn-filter-tag chart-group-btn" data-group="semana">Semana</button>
+                <button type="button" class="btn-filter-tag chart-group-btn" data-group="mes">Mês</button>
+                <button type="button" class="btn-filter-tag chart-group-btn" data-group="ano">Ano</button>
+                
+                <span class="text-muted" style="font-size: 0.75rem; align-self: center; margin: 0 4px 0 10px;">Exibir:</span>
+                <button type="button" class="btn-filter-tag chart-metric-btn active" data-metric="cortes">Cortes</button>
+                <button type="button" class="btn-filter-tag chart-metric-btn" data-metric="faturamento">R$ Faturamento</button>
+              </div>
+            </div>
+
+            <div class="canvas-container">
+              <canvas id="adminPerformanceChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 2: AGENDA DIÁRIA -->
+        <div id="tabPane_agenda" class="admin-tab-pane hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 style="font-size: 1.1rem; font-weight: 700;">Agendamentos do Dia</h3>
+              <p class="text-muted" style="font-size: 0.78rem;">Lista em ordem cronológica de atendimentos</p>
+            </div>
+
+            <div class="custom-date-row">
+              <label for="adminAgendaDate">Data da Agenda:</label>
+              <input type="date" id="adminAgendaDate">
+            </div>
+          </div>
+
+          <div class="agenda-list" id="dailyAgendaList">
+            <!-- Lista cronológica de agendamentos com botões de ação -->
+          </div>
+        </div>
+
+        <!-- ABA 3: PREÇOS & SIMULADOR -->
+        <div id="tabPane_precos" class="admin-tab-pane hidden">
+          <div class="admin-card-container">
+            <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">Tabela de Preços do Barbeiro</h3>
+            <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 20px;">
+              Cada barbeiro define autonomamente o valor cobrado pelos seus serviços. As alterações refletem imediatamente na página pública.
+            </p>
+
+            <form id="barberPricesForm">
+              <div class="input-row" style="margin-bottom: 20px;">
+                <div class="form-group">
+                  <label for="inputPrecoCabelo" class="form-label">Preço: Corte de Cabelo (R$)</label>
+                  <input type="number" step="0.50" min="5" id="inputPrecoCabelo" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label for="inputPrecoBarba" class="form-label">Preço: Apenas Barba (R$)</label>
+                  <input type="number" step="0.50" min="5" id="inputPrecoBarba" class="form-input" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary" style="margin-bottom: 24px;">Salvar Novos Preços</button>
+            </form>
+
+            <!-- SIMULADOR DE FATURAMENTO -->
+            <div class="simulator-box">
+              <h4 style="font-size: 1rem; font-weight: 800; color: var(--cta); margin-bottom: 6px;">
+                🧮 Simulador de Reajuste de Preços
+              </h4>
+              <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 16px;">
+                Teste diferentes valores de corte e barba e veja instantaneamente a projeção do faturamento com base nos clientes atendidos neste mês.
+              </p>
+
+              <div class="input-row" style="margin-bottom: 14px;">
+                <div class="form-group">
+                  <label class="form-label">Simular Preço Cabelo (R$)</label>
+                  <input type="number" step="1" id="simPrecoCabelo" class="form-input" value="40.00">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Simular Preço Barba (R$)</label>
+                  <input type="number" step="1" id="simPrecoBarba" class="form-input" value="25.00">
+                </div>
+              </div>
+
+              <div style="font-size: 0.85rem; margin-bottom: 12px; color: var(--text-muted);">
+                Combo Cabelo + Barba Simulado: <strong id="simPrecoComboDisplay" class="text-cta">R$ 65,00</strong>
+              </div>
+
+              <div id="simEstimatedRevenue">
+                <!-- Métricas calculadas dinamicamente -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 4: TOP 10 CLIENTES -->
+        <div id="tabPane_clientes" class="admin-tab-pane hidden">
+          <div class="admin-card-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800;">Top 10 Clientes Frequentes</h3>
+                <p class="text-muted" style="font-size: 0.85rem;">Clientes que mais agendaram serviços com você</p>
+              </div>
+            </div>
+
+            <div id="topClientsContainer">
+              <!-- Tabela renderizada dinamicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==============================================================================
+       MODAL 1: RESUMO DO AGENDAMENTO (CONFIRMAÇÃO)
+       ============================================================================== -->
+  <div id="confirmationModal" class="modal-overlay">
+    <div class="modal-window">
+      <button type="button" class="modal-close-icon close-modal-btn">&times;</button>
+      <h3 class="modal-title">Confirmar Agendamento</h3>
+      <p class="modal-subtitle">Confira os detalhes da sua reserva na J&R Barbearia</p>
+
+      <div class="summary-list">
+        <div class="summary-item">
+          <span class="label">Barbeiro:</span>
+          <span class="value" id="modalResumoBarbeiro">Juliano</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Serviço:</span>
+          <span class="value" id="modalResumoServico">Corte de Cabelo</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Data:</span>
+          <span class="value" id="modalResumoData">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Horário:</span>
+          <span class="value" id="modalResumoHorario">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Cliente:</span>
+          <span class="value" id="modalResumoCliente">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Valor Total:</span>
+          <span class="value total" id="modalResumoValor">R$ 35,00</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn-secondary close-modal-btn" style="flex: 1;">Voltar</button>
+        <button type="button" class="btn-cta-main" id="confirmBookingFinalBtn" style="flex: 2;">
+          Confirmar Agendamento
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================================================
+       MODAL 2: SUCESSO DO AGENDAMENTO (WHATSAPP & CALENDÁRIO)
+       ============================================================================== -->
+  <div id="successModal" class="modal-overlay">
+    <div class="modal-window" style="text-align: center;">
+      <button type="button" class="modal-close-icon close-modal-btn">&times;</button>
+      
+      <div class="success-header-graphic">
+        <div class="success-check-badge">✓</div>
+      </div>
+
+      <h3 class="modal-title">Horário Confirmado!</h3>
+      <p class="modal-subtitle">
+        Tudo pronto, <strong id="successClientName">Cliente</strong>! Seu horário está reservado com <strong id="successBarberName">Juliano</strong>.
+      </p>
+
+      <div class="summary-list" style="text-align: left;">
+        <div class="summary-item">
+          <span class="label">Data &amp; Hora:</span>
+          <span class="value" id="successDateTime">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Serviço:</span>
+          <span class="value" id="successServiceName">-</span>
+        </div>
+      </div>
+
+      <div class="action-buttons-stack">
+        <!-- WhatsApp -->
+        <a id="whatsAppConfirmationBtn" href="#" class="btn-whatsapp-action">
+          <span>💬 Enviar Confirmação via WhatsApp</span>
+        </a>
+
+        <!-- Google Calendar -->
+        <a id="googleCalendarBtn" href="#" class="btn-calendar-action">
+          <span>📅 Adicionar ao Google Agenda</span>
+        </a>
+
+        <!-- Arquivo ICS para Apple/Android/Outlook -->
+        <button type="button" id="downloadIcsBtn" class="btn-calendar-action">
+          <span>📲 Baixar Evento para Celular (.ics)</span>
+        </button>
+
+        <button type="button" class="btn-secondary close-modal-btn" style="margin-top: 6px;">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================================================
+       MODAL 3: NOVO AGENDAMENTO MANUAL (PAINEL DO BARBEIRO)
+       ============================================================================== -->
+  <div id="manualAppointmentModal" class="modal-overlay">
+    <div class="modal-window">
+      <button type="button" class="modal-close-icon close-modal-btn">&times;</button>
+      <h3 class="modal-title">Novo Agendamento Manual</h3>
+      <p class="modal-subtitle">Para clientes presenciais ou agendamentos por telefone</p>
+
+      <form id="manualAppointmentForm">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Nome do Cliente <span class="required">*</span></label>
+          <input type="text" id="manualNome" class="form-input" required placeholder="Ex: Roberto Silva">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Telefone / WhatsApp <span class="required">*</span></label>
+          <input type="tel" id="manualTelefone" class="form-input" required placeholder="(11) 98765-4321">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Serviço</label>
+          <select id="manualServico" class="form-input">
+            <option value="cabelo">Corte de Cabelo</option>
+            <option value="barba">Apenas Barba</option>
+            <option value="cabelo_barba">Cabelo e Barba</option>
+          </select>
+        </div>
+
+        <div class="input-row" style="margin-bottom: 18px;">
+          <div class="form-group">
+            <label class="form-label">Data</label>
+            <input type="date" id="manualDate" class="form-input" required onchange="window.JR_ADMIN.populateManualSlots()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Horário (30 min)</label>
+            <select id="manualHorario" class="form-input" required>
+              <!-- Preenchido dinamicamente -->
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn-secondary close-modal-btn" style="flex: 1;">Cancelar</button>
+          <button type="submit" class="btn-cta-main" style="flex: 2;">Agendar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==============================================================================
+       MODAL 4: CONFIGURAÇÕES DO SUPABASE
+       ============================================================================== -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-window">
+      <button type="button" class="modal-close-icon close-modal-btn">&times;</button>
+      <h3 class="modal-title">Configurações do Supabase</h3>
+      <p class="modal-subtitle">Conecte sua instância PostgreSQL do Supabase ou continue usando o banco local de alta fidelidade.</p>
+
+      <div style="margin-bottom: 14px;">
+        <span id="currentStorageStatusBadge" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(0, 136, 148, 0.2); color: var(--accent-light);">
+          Status: Banco Local Ativo
+        </span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label">Project URL do Supabase</label>
+        <input type="url" id="settingsSupabaseUrl" class="form-input" placeholder="https://xyz.supabase.co">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label">Anon Public Key</label>
+        <input type="password" id="settingsSupabaseKey" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" class="btn-primary" onclick="window.JR_APP.saveSupabaseConfig()">
+          Salvar Credenciais
+        </button>
+        <button type="button" class="btn-secondary" onclick="window.JR_APP.resetToLocalDatabase()">
+          Restaurar Banco Local de Testes (Mock)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTAINER DE NOTIFICAÇÕES (TOASTS) -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- RODAPÉ -->
+  <footer class="app-footer">
+    <p><strong>J&amp;R Barbearia</strong> • Juliano &amp; Robert • Todos os direitos reservados.</p>
+    <p style="margin-top: 4px; font-size: 0.72rem; color: var(--accent);">Mobile-First &amp; PWA Ready</p>
+  </footer>
+
+  <!-- ==============================================================================
+       SCRIPTS DA APLICAÇÃO
+       ============================================================================== -->
+  <script src="./js/config.js"></script>
+  <script src="./js/supabaseClient.js"></script>
+  <script src="./js/charts.js"></script>
+  <script src="./js/booking.js"></script>
+  <script src="./js/admin.js"></script>
+
+  <!-- Controlador Geral da SPA -->
+  <script>
+    class JRApplication {
+      constructor() {
+        this.currentView = 'booking'; // 'booking' ou 'admin'
+      }
+
+      async init() {
+        // Inicializa Service Worker se suportado
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js').catch(err => {
+            console.log('SW registration skipped:', err);
+          });
+        }
+
+        // Inicializa módulos
+        await window.JR_BOOKING.init();
+        await window.JR_ADMIN.init();
+
+        // Checa se rota contém #admin
+        if (window.location.hash === '#admin') {
+          this.switchView('admin');
+        }
+
+        // Listener de mudança de hash
+        window.addEventListener('hashchange', () => {
+          if (window.location.hash === '#admin') {
+            this.switchView('admin');
+          } else {
+            this.switchView('booking');
+          }
+        });
+      }
+
+      toggleView() {
+        if (this.currentView === 'booking') {
+          this.switchView('admin');
+        } else {
+          this.switchView('booking');
+        }
+      }
+
+      switchView(viewName) {
+        this.currentView = viewName;
+        const clientView = document.getElementById('clientBookingView');
+        const adminView = document.getElementById('adminView');
+        const toggleIcon = document.getElementById('navToggleIcon');
+        const toggleLabel = document.getElementById('navToggleLabel');
+        const toggleBtn = document.getElementById('viewToggleBtn');
+
+        if (viewName === 'admin') {
+          clientView.classList.add('hidden');
+          adminView.classList.remove('hidden');
+          toggleIcon.textContent = '✂️';
+          toggleLabel.textContent = 'Agendar Corte';
+          toggleBtn.classList.add('active');
+          window.location.hash = '#admin';
+          window.JR_ADMIN.checkSession();
+        } else {
+          clientView.classList.remove('hidden');
+          adminView.classList.add('hidden');
+          toggleIcon.textContent = '💈';
+          toggleLabel.textContent = 'Área do Barbeiro';
+          toggleBtn.classList.remove('active');
+          window.location.hash = '';
+          window.JR_BOOKING.loadBarbersAndServices();
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      toast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        const el = document.createElement('div');
+        el.className = `toast toast-${type}`;
+        
+        let icon = 'ℹ️';
+        if (type === 'success') icon = '✓';
+        else if (type === 'warning') icon = '⚠️';
+        else if (type === 'error') icon = '✕';
+
+        el.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+        container.appendChild(el);
+
+        setTimeout(() => {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(10px)';
+          el.style.transition = 'all 0.3s ease';
+          setTimeout(() => el.remove(), 300);
+        }, 3800);
+      }
+
+      openSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        const statusBadge = document.getElementById('currentStorageStatusBadge');
+        const urlInput = document.getElementById('settingsSupabaseUrl');
+        const keyInput = document.getElementById('settingsSupabaseKey');
+
+        urlInput.value = window.JR_DB.supabaseUrl || '';
+        keyInput.value = window.JR_DB.supabaseKey || '';
+
+        if (window.JR_DB.isSupabaseConfigured()) {
+          statusBadge.textContent = 'Status: Supabase Cloud Conectado';
+          statusBadge.style.color = '#A8EB12';
+        } else {
+          statusBadge.textContent = 'Status: Banco Local Ativo (Zero Dependências)';
+          statusBadge.style.color = '#008894';
+        }
+
+        modal.classList.add('active');
+      }
+
+      saveSupabaseConfig() {
+        const url = document.getElementById('settingsSupabaseUrl').value.trim();
+        const key = document.getElementById('settingsSupabaseKey').value.trim();
+
+        if (url && !url.startsWith('http')) {
+          this.toast('A URL deve começar com https://', 'warning');
+          return;
+        }
+
+        window.JR_DB.setCredentials(url, key);
+        this.toast('Configurações salvas! Atualizando dados...', 'success');
+        document.getElementById('settingsModal').classList.remove('active');
+        setTimeout(() => window.location.reload(), 800);
+      }
+
+      resetToLocalDatabase() {
+        window.JR_DB.clearCredentials();
+        window.JR_DB.resetToSeedData();
+        this.toast('Banco restaurado para os dados de teste!', 'success');
+        document.getElementById('settingsModal').classList.remove('active');
+        setTimeout(() => window.location.reload(), 600);
+      }
+    }
+
+    window.JR_APP = new JRApplication();
+    document.addEventListener('DOMContentLoaded', () => {
+      window.JR_APP.init();
+    });
+  </script>
+</body>
+</html>
