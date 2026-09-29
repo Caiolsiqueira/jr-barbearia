@@ -118,8 +118,8 @@ def main():
     admin_url = f"{public_url}#admin"
 
     print("\n==================================================")
-    print("  🚀 DEPLOY REALIZADO COM SUCESSO!")
-    print(f"  Repositório GitHub: https://github.com/{username}/{REPO_NAME}")
+    print("  [SUCESSO] DEPLOY REALIZADO COM SUCESSO!")
+    print(f"  Repositorio GitHub: https://github.com/{username}/{REPO_NAME}")
     print(f"  Site Online (PWA):  {public_url}")
     print(f"  Painel Admin:       {admin_url}")
     print("==================================================")
